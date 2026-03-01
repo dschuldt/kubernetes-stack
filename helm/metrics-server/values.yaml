@@ -1,0 +1,6 @@
+metrics:
+  enabled: true
+serviceMonitor:
+  enabled: true
+  interval: 1m
+  scrapeTimeout: 10s

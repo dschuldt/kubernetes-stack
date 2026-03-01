@@ -1,0 +1,12 @@
+crds:
+  enabled: true
+  keep: true
+replicaCount: 1
+maxConcurrentChallenges: 20
+
+prometheus:
+  servicemonitor:
+    enabled: true
+
+config:
+  enableGatewayAPI: true

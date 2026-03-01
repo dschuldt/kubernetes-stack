@@ -1,0 +1,42 @@
+resources:
+  - apiVersion: gateway.networking.k8s.io/v1
+    kind: Gateway
+    metadata:
+      name: cilium
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+    spec:
+      gatewayClassName: cilium
+      allowedListeners:
+        namespaces:
+          from: All
+      listeners:
+        - name: https
+          port: 443
+          protocol: HTTPS
+          hostname: '*.{{ requiredEnv "DOMAIN" }}'
+          tls:
+            mode: Terminate
+            certificateRefs:
+              - name: wildcard-default-cert
+          allowedRoutes:
+            namespaces:
+              from: All
+
+  - apiVersion: cilium.io/v2
+    kind: CiliumLoadBalancerIPPool
+    metadata:
+      name: default
+    spec:
+      blocks:
+        - start: 192.168.178.201
+          stop: 192.168.178.220
+
+  - apiVersion: cilium.io/v2alpha1
+    kind: CiliumL2AnnouncementPolicy
+    metadata:
+      name: default
+    spec:
+      loadBalancerIPs: true
+      interfaces:
+        - ^eth[0-9]+

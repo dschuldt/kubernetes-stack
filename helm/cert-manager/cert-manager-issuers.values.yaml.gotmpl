@@ -1,0 +1,25 @@
+resources:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: cloudflare-api-token-secret
+    type: Opaque
+    stringData:
+      api-token: {{ requiredEnv "CLOUDFLARE_API_TOKEN" | quote }}
+
+  - apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: letsencrypt-production
+    spec:
+      acme:
+        server: https://acme-v02.api.letsencrypt.org/directory
+        email: {{ requiredEnv "LETSENCRYPT_EMAIL" | quote }}
+        privateKeySecretRef:
+          name: letsencrypt-production
+        solvers:
+          - dns01:
+              cloudflare:
+                apiTokenSecretRef:
+                  name: cloudflare-api-token-secret
+                  key: api-token

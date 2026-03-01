@@ -1,0 +1,89 @@
+operator:
+  replicas: 1
+  prometheus:
+    metricsService: true
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+k8sServiceHost: {{ requiredEnv "CILIUM_K8S_SERVICE_HOST" | quote }}
+k8sServicePort: 6443
+
+kubeProxyReplacement: true
+
+encryption:
+  enabled: true
+  type: wireguard
+  nodeEncryption: true
+
+l2announcements:
+  enabled: true
+
+gatewayAPI:
+  enabled: true
+  enableProxyProtocol: false
+  enableAlpn: true
+  xffNumTrustedHops: 0
+  externalTrafficPolicy: Local
+  gatewayClass:
+    create: "true"
+
+ingressController:
+  enabled: false
+
+dashboards:
+  enabled: true
+
+authentication:
+  enabled: true
+  mutual:
+    spire:
+      enabled: true
+      trustDomain: "spiffe.cilium"
+      serverAddress: "spire-server.cilium-spire.svc:8081"
+      install:
+        enabled: true
+        namespace: cilium-spire
+        server:
+          dataStorage:
+            enabled: true
+
+hubble:
+  relay:
+    enabled: true
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  ui:
+    enabled: true
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+      className: haproxy
+      hosts:
+        - hubble.{{ requiredEnv "DOMAIN" }}
+      tls:
+        - secretName: hubble-tls
+          hosts:
+            - hubble.{{ requiredEnv "DOMAIN" }}
+  metrics:
+    dashboards:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+
+prometheus:
+  enabled: true
+  metricsService: true
+  port: 9962
+  serviceMonitor:
+    enabled: true
+    trustCRDsExist: true
+
+envoy:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true

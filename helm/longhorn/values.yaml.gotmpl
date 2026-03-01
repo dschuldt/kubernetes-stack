@@ -1,0 +1,23 @@
+longhornUI:
+  replicas: 1
+
+ingress:
+  enabled: true
+  ingressClassName: haproxy
+  host: longhorn.{{ requiredEnv "DOMAIN" }}
+  tls: true
+  secureBackends: false
+  tlsSecret: longhorn-tls
+  path: /
+  pathType: ImplementationSpecific
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+
+metrics:
+  serviceMonitor:
+    enabled: true
+
+persistence:
+  defaultClass: true
+  defaultFsType: ext4
+  defaultClassReplicaCount: 2

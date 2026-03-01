@@ -1,0 +1,27 @@
+global:
+  domain: argocd.{{ requiredEnv "DOMAIN" }}
+
+configs:
+  params:
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: haproxy
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production
+    extraTls:
+      - hosts:
+          - argocd.{{ requiredEnv "DOMAIN" }}
+        secretName: argocd-tls
+
+  ingressGrpc:
+    enabled: true
+    ingressClassName: haproxy
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production
+    extraTls:
+      - hosts:
+          - grpc.argocd.{{ requiredEnv "DOMAIN" }}
+        secretName: argocd-grpc-tls

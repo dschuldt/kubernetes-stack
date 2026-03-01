@@ -1,0 +1,35 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: demo
+  namespace: default
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  instances: 2
+  enablePDB: true
+  storage:
+    size: 10Gi
+    storageClass: local-path
+  bootstrap:
+    initdb:
+      database: demo
+      owner: demo
+      secret:
+        name: demo-secret
+  postgresql:
+    parameters:
+      max_connections: "200"            # Or use connection pooling (PgBouncer)
+      shared_buffers: "2GB"             # Start with 25% of RAM
+      effective_cache_size: "6GB"       # Set to ~75% of total RAM
+      work_mem: "32MB"                  # Conservative for OLTP, higher for analytics
+      maintenance_work_mem: "2GB"       # 50-100x higher than work_mem
+      vacuum_buffer_usage_limit: "2GB"  # HUGE performance win
+      checkpoint_timeout: "15min"
+      max_wal_size: "2GB"               # Higher for write-heavy workloads
+      random_page_cost: "1.1"           # For SSDs/NVMe
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: minio

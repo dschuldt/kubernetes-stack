@@ -1,0 +1,45 @@
+resources:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: haproxy-patterns
+    data:
+      ip-allowlist: |
+        192.168.178.0/24
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: haproxy-tcpservices
+    data:
+
+  - apiVersion: ingress.v3.haproxy.org/v3
+    kind: Defaults
+    metadata:
+      name: haproxy-defaults
+    spec:
+      splice_auto: enabled
+      client_timeout: 60000
+      server_timeout: 60000
+      http_keep_alive_timeout: 10000
+
+  - apiVersion: ingress.v3.haproxy.org/v3
+    kind: Global
+    metadata:
+      name: haproxy-global
+    spec:
+      log_target_list:
+        - address: stdout
+          facility: daemon
+          format: raw
+          level: info
+      ssl_options:
+        server_verify: none
+        default_bind_curves: X25519:prime256v1:secp384r1
+        default_bind_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305
+        default_bind_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+        default_bind_options: prefer-client-ciphers ssl-min-ver TLSv1.2 no-tls-tickets
+        default_server_curves: X25519:prime256v1:secp384r1
+        default_server_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305
+        default_server_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+        default_server_options: ssl-min-ver TLSv1.2 no-tls-tickets

@@ -1,0 +1,15 @@
+configuration:
+  startTime: "05:00"
+  endTime: "06:00"
+  concurrency: 1             # amount of nodes to concurrently reboot. (default 1)
+  period: "0h10m"            # reboot check period (default 1h0m0s)
+  timeZone: "Europe/Berlin"
+  annotateNodes: true
+  useRebootSentinelHostPath: false
+  rebootSentinelCommand: sh -c '! nsenter -m/proc/1/ns/mnt -- dnf needs-restarting -r'
+
+metrics:
+  create: true
+
+service:
+  create: true

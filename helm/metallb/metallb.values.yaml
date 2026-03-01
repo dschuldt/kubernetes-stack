@@ -1,0 +1,5 @@
+prometheus:
+  serviceMonitor:
+    enabled: true
+  serviceAccount: kube-prometheus-stack-prometheus
+  namespace: "kube-prometheus-stack"

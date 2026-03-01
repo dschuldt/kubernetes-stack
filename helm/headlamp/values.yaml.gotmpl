@@ -1,0 +1,14 @@
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  ingressClassName: haproxy
+  hosts:
+    - host: headlamp.{{ requiredEnv "DOMAIN" }}
+      paths:
+        - path: /
+          type: ImplementationSpecific
+  tls:
+    - secretName: headlamp-tls
+      hosts:
+        - headlamp.{{ requiredEnv "DOMAIN" }}

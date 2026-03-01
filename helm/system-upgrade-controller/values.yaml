@@ -1,0 +1,67 @@
+resources:
+  - apiVersion: upgrade.cattle.io/v1
+    kind: Plan
+    metadata:
+      name: server-plan
+    spec:
+      concurrency: 1
+      cordon: true
+      nodeSelector:
+        matchExpressions:
+          - key: node-role.kubernetes.io/control-plane
+            operator: In
+            values:
+              - "true"
+      serviceAccountName: system-upgrade-controller
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+          operator: Exists
+        - key: node-role.kubernetes.io/etcd
+          effect: NoSchedule
+          operator: Exists
+      upgrade:
+        image: almalinux:10
+        command: ["chroot", "/host"]
+        args: ["dnf", "update", "-y", "--refresh"]
+      version: "2026-02"
+      window:
+        days:
+          - monday
+          - tuesday
+          - wednesday
+          - thursday
+          - friday
+        startTime: 05:00
+        endTime: 06:00
+        timeZone: Europe/Berlin
+
+  - apiVersion: upgrade.cattle.io/v1
+    kind: Plan
+    metadata:
+      name: agent-plan
+    spec:
+      concurrency: 1
+      cordon: true
+      nodeSelector:
+        matchExpressions:
+          - key: node-role.kubernetes.io/control-plane
+            operator: DoesNotExist
+      serviceAccountName: system-upgrade-controller
+      upgrade:
+        image: almalinux:10
+        command: ["chroot", "/host"]
+        args: ["dnf", "update", "-y", "--refresh"]
+      version: "2026-02"
+      window:
+        days:
+          - monday
+          - tuesday
+          - wednesday
+          - thursday
+          - friday
+        startTime: 05:00
+        endTime: 06:00
+        timeZone: Europe/Berlin

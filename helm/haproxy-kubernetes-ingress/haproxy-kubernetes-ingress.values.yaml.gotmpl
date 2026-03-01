@@ -1,0 +1,42 @@
+controller:
+  kind: Deployment
+  replicaCount: 1
+  containerPort:
+    http: 8080
+    https: 8443
+    stat: 1024
+    admin: 6060
+  ingressClassResource:
+    name: haproxy
+    default: true
+  ingressClass: haproxy
+  kubernetesGateway:
+    enabled: false # haproxy does not support recent gateway api
+    gatewayControllerName: haproxy.org/gateway-controller
+  defaultTLSSecret:
+    enabled: false
+  extraArgs:
+    - --disable-ipv6
+    - --configmap-patternfiles={{ .Release.Namespace }}/haproxy-patterns
+    - --configmap-tcp-services={{ .Release.Namespace }}/haproxy-tcpservices
+    - --prometheus
+  service:
+    enabled: true
+    type: LoadBalancer
+    externalTrafficPolicy: "Local"
+  serviceMonitor:
+    enabled: true
+    endpoints:
+      - port: stat
+        path: /metrics
+        scheme: http
+        interval: 30s
+  config:
+    cr-global: haproxy-global
+    cr-defaults: haproxy-defaults
+    scale-server-slots: "10"
+    request-capture: |
+      hdr(X-Forwarded-For)
+      hdr(Host)
+      hdr(User-Agent)
+    request-capture-len: "350"

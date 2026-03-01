@@ -1,0 +1,7 @@
+monitoring:
+  podMonitorEnabled: true
+  grafanaDashboard:
+    create: true
+    configMapName: "cnpg-grafana-dashboard"
+    labels:
+      grafana_dashboard: "1"

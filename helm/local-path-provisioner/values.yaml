@@ -1,0 +1,17 @@
+image:
+  repository: rancher/local-path-provisioner
+  tag: v0.0.34
+  pullPolicy: IfNotPresent
+
+storageClass:
+  create: true
+  defaultClass: true
+  defaultVolumeType: local
+  name: local-path
+  reclaimPolicy: Delete
+  volumeBindingMode: WaitForFirstConsumer
+
+nodePathMap:
+  - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+    paths:
+      - /var/local-path-provisioner

@@ -1,0 +1,6 @@
+oauth:
+  clientId: {{ requiredEnv "TAILSCALE_CLIENT_ID" | quote }}
+  clientSecret: {{ requiredEnv "TAILSCALE_CLIENT_SECRET" | quote }}
+
+apiServerProxyConfig:
+  allowImpersonation: "true"

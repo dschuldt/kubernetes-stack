@@ -1,0 +1,31 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: minio
+  namespace: default
+spec:
+  instanceSidecarConfiguration:
+    env:
+      - name: AWS_REQUEST_CHECKSUM_CALCULATION
+        value: when_required
+      - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+        value: when_required
+  configuration:
+    destinationPath: s3://postgres-backup/
+    endpointURL: $S3_ENDPOINT_URL
+    s3Credentials:
+      accessKeyId:
+        name: minio-s3-creds
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: minio-s3-creds
+        key: ACCESS_SECRET_KEY
+      region:
+        name: minio-s3-creds
+        key: REGION
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+  retentionPolicy: "7d"

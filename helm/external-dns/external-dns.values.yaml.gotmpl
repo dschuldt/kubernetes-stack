@@ -1,0 +1,19 @@
+sources:
+  - service
+  - ingress
+  - gateway-httproute
+  - gateway-grpcroute
+provider:
+  name: cloudflare
+
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-api-token
+        key: cloudflare_api_token
+
+policy: sync
+txtOwnerId: external-dns
+domainFilters:
+  - {{ requiredEnv "DOMAIN" }}

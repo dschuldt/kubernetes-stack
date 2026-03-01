@@ -1,0 +1,7 @@
+metrics:
+  serviceMonitor:
+    enabled: true
+  dashboards:
+    create: true
+    labels:
+      grafana_dashboard: "1"

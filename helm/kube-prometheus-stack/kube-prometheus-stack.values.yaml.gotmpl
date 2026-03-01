@@ -1,0 +1,68 @@
+alertmanager:
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production
+    hosts:
+      - alertmanager.{{ requiredEnv "DOMAIN" }}
+    paths:
+      - /
+    tls:
+      - secretName: alertmanager-tls
+        hosts:
+          - alertmanager.{{ requiredEnv "DOMAIN" }}
+
+grafana:
+  initChownData:
+    enabled: false
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production
+    hosts:
+      - grafana.{{ requiredEnv "DOMAIN" }}
+    path: /
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.{{ requiredEnv "DOMAIN" }}
+  persistence:
+    enabled: true
+    type: pvc
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+    storageClassName: local-path
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: ALL
+      label: grafana_dashboard
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeTimeout: "15s"
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-production
+    hosts:
+      - prometheus.{{ requiredEnv "DOMAIN" }}
+    paths:
+      - /
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.{{ requiredEnv "DOMAIN" }}
