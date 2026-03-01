@@ -4,6 +4,8 @@ A production-ready Kubernetes platform deployed with a single command using [Hel
 
 All configuration is template-driven (`.gotmpl` files) with environment variable substitution, making the stack portable across environments.
 
+The infra base is k3s on Almalinux 10 cloud hosts.
+
 ## Components
 
 | Category | Component | Description |
