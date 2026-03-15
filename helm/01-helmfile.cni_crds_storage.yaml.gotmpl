@@ -1,0 +1,115 @@
+{{- $bedag_raw_chart_version := "2.0.2" -}}
+
+repositories:
+  - name: bedag
+    url: https://bedag.github.io/helm-charts/
+  - name: metrics-server
+    url: https://kubernetes-sigs.github.io/metrics-server/
+  - name: longhorn
+    url: https://charts.longhorn.io
+
+releases:
+  - name: gateway-api-crds
+    namespace: kube-system
+    chart: bedag/raw
+    version: {{ $bedag_raw_chart_version }}
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: "kubectl"
+        args:
+          - "apply"
+          - "--server-side"
+          - "-f"
+          - "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/experimental-install.yaml"
+
+  - name: prometheus-operator-crds
+    namespace: kube-prometheus-stack
+    chart: oci://ghcr.io/prometheus-community/charts/prometheus-operator-crds
+    version: 27.0.0
+    createNamespace: true
+
+  - name: cilium
+    namespace: kube-system
+    chart: oci://quay.io/cilium/charts/cilium
+    version: 1.19.1
+    values:
+      - cilium/values.yaml.gotmpl
+    needs:
+      - kube-system/gateway-api-crds
+      - kube-prometheus-stack/prometheus-operator-crds
+
+  - name: cilium-resources
+    namespace: kube-system
+    chart: bedag/raw
+    version: {{ $bedag_raw_chart_version }}
+    values:
+      - cilium/cilium-resources.yaml.gotmpl
+    needs:
+      - kube-system/cilium
+
+  - name: metrics-server
+    namespace: kube-system
+    chart: metrics-server/metrics-server
+    version: 3.13.0
+    values:
+      - metrics-server/values.yaml
+    needs:
+      - kube-system/cilium
+
+  - name: local-path-provisioner
+    namespace: local-path-storage
+    chart: git::https://github.com/rancher/local-path-provisioner.git@deploy/chart/local-path-provisioner
+    createNamespace: true
+    values:
+      - local-path-provisioner/values.yaml
+    needs:
+      - kube-system/cilium
+
+  - name: longhorn
+    namespace: longhorn-system
+    chart: longhorn/longhorn
+    version: 1.11.0
+    createNamespace: true
+    values:
+      - longhorn/values.yaml.gotmpl
+    needs:
+      - kube-system/cilium
+
+  - name: haproxy-kubernetes-ingress
+    namespace: haproxy-controller
+    chart: oci://ghcr.io/haproxytech/helm-charts/kubernetes-ingress
+    version: 1.49.0
+    createNamespace: true
+    values:
+      - haproxy-kubernetes-ingress/haproxy-kubernetes-ingress.values.yaml.gotmpl
+    needs:
+      - kube-system/cilium
+
+  - name: haproxy-kubernetes-ingress-config
+    namespace: haproxy-controller
+    chart: bedag/raw
+    version: {{ $bedag_raw_chart_version }}
+    values:
+      - haproxy-kubernetes-ingress/haproxy-kubernetes-ingress-config.values.yaml
+    needs:
+      - haproxy-controller/haproxy-kubernetes-ingress
+
+  # - name: metallb
+  #   namespace: metallb-system
+  #   chart: oci://quay.io/metallb/chart/metallb
+  #   version: 0.15.3
+  #   createNamespace: true
+  #   values:
+  #     - metallb/metallb.values.yaml
+  #   needs:
+  #     - kube-system/cilium
+
+  # - name: metallb-config
+  #   namespace: metallb-system
+  #   chart: bedag/raw
+  #   version: {{ $bedag_raw_chart_version }}
+  #   values:
+  #     - metallb/metallb-config.values.yaml
+  #   needs:
+  #     - metallb-system/metallb

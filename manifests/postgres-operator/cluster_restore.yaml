@@ -12,11 +12,8 @@ spec:
     size: 10Gi
     storageClass: longhorn
   bootstrap:
-    initdb:
-      database: demo
-      owner: demo
-      secret:
-        name: demo-secret
+    recovery:
+      source: source
   postgresql:
     parameters:
       max_connections: "200"            # Or use connection pooling (PgBouncer)
@@ -33,3 +30,11 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: minio
+        serverName: demo-restore
+  externalClusters:
+    - name: source
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: minio
+          serverName: demo

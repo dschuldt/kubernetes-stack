@@ -16,6 +16,7 @@ encryption:
   type: wireguard
   nodeEncryption: true
 
+# enable if not using metallb
 l2announcements:
   enabled: true
 
@@ -29,20 +30,22 @@ gatewayAPI:
     create: "true"
 
 ingressController:
-  enabled: false
+  enabled: true
+  loadbalancerMode: shared
 
 dashboards:
   enabled: true
 
 authentication:
-  enabled: true
+  # enable for spire mtls
+  enabled: false
   mutual:
     spire:
-      enabled: true
+      enabled: false
       trustDomain: "spiffe.cilium"
       serverAddress: "spire-server.cilium-spire.svc:8081"
       install:
-        enabled: true
+        enabled: false
         namespace: cilium-spire
         server:
           dataStorage:
@@ -83,6 +86,7 @@ prometheus:
     trustCRDsExist: true
 
 envoy:
+  enabled: true
   prometheus:
     enabled: true
     serviceMonitor:

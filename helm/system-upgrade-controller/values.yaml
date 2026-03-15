@@ -26,7 +26,7 @@ resources:
         image: almalinux:10
         command: ["chroot", "/host"]
         args: ["dnf", "update", "-y", "--refresh"]
-      version: "2026-02"
+      version: "2026-02" # this version determines the target plan
       window:
         days:
           - monday
@@ -54,7 +54,7 @@ resources:
         image: almalinux:10
         command: ["chroot", "/host"]
         args: ["dnf", "update", "-y", "--refresh"]
-      version: "2026-02"
+      version: "2026-02" # this version determines the target plan
       window:
         days:
           - monday

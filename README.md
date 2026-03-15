@@ -2,9 +2,9 @@
 
 A production-ready Kubernetes platform deployed with a single command using [Helmfile](https://github.com/helmfile/helmfile). Designed for bare-metal / self-managed clusters.
 
-All configuration is template-driven (`.gotmpl` files) with environment variable substitution, making the stack portable across environments.
+All configuration is template-driven (`.gotmpl` files) with environment variable substitution via `requiredEnv`, making the stack portable across environments.
 
-The infra base is k3s on Almalinux 10 cloud hosts.
+The infra base is k3s on AlmaLinux 10 cloud hosts.
 
 ## Components
 
@@ -14,22 +14,24 @@ The infra base is k3s on Almalinux 10 cloud hosts.
 | | [Gateway API CRDs](https://gateway-api.sigs.k8s.io/) | Kubernetes Gateway API (experimental channel) |
 | | [HAProxy Ingress](https://haproxy-ingress.github.io/) | Ingress controller |
 | | [External DNS](https://github.com/kubernetes-sigs/external-dns) | Automatic DNS record management (Cloudflare) |
-| **Security** | [cert-manager](https://cert-manager.io/) | Automated TLS certificates with Let's Encrypt cluster issuers |
+| **Security** | [cert-manager](https://cert-manager.io/) | Automated TLS certificates with Let's Encrypt (Cloudflare DNS01) |
 | | [Sealed Secrets](https://sealed-secrets.netlify.app/) | Encrypted secrets for GitOps workflows |
-| | [Tailscale Operator](https://tailscale.com/kb/1236/kubernetes-operator) | VPN integration for secure remote access |
-| **Monitoring** | [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) | Prometheus, Grafana (with custom dashboards), and Alertmanager |
+| | [Tailscale Operator](https://tailscale.com/kb/1236/kubernetes-operator) | VPN integration for secure remote access and API server proxy |
+| **Monitoring** | [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) | Prometheus, Grafana, and Alertmanager with custom dashboards (ArgoCD, cert-manager, Envoy, HAProxy, MetalLB) |
 | | [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) | Cluster resource metrics |
 | | [Headlamp](https://headlamp.dev/) | Kubernetes web UI |
 | **Storage** | [Longhorn](https://longhorn.io/) | Distributed block storage |
 | | [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) | Local storage for persistent volumes |
 | **Databases** | [CloudNativePG](https://cloudnative-pg.io/) | PostgreSQL operator with Barman backup plugin |
+| | [MongoDB Kubernetes Operator](https://www.mongodb.com/docs/kubernetes/current/) | MongoDB operator |
+| **Logging** | [Graylog](https://graylog.org/) | Centralized log management |
 | **GitOps** | [Argo CD](https://argoproj.github.io/cd/) | Continuous delivery |
 | **Cluster Ops** | [System Upgrade Controller](https://github.com/rancher/system-upgrade-controller) | Automated host upgrades via Kubernetes-native plans |
 | | [Kured](https://kured.dev/) | Safe automatic node reboots |
 
 ## Prerequisites
 
-- A running Kubernetes cluster (kubeconfig configured) without kube-proxy (Cilium will take care of that)
+- A running k3s cluster (kubeconfig configured) installed **without** kube-proxy, Flannel, and ServiceLB (Cilium replaces all three)
 - [Helmfile](https://github.com/helmfile/helmfile) installed
 - [Helm](https://helm.sh/) installed
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) installed
@@ -53,6 +55,15 @@ export TAILSCALE_CLIENT_SECRET=<tailscale-oauth-client-secret>
 
 The script validates that all variables are set before running `helmfile sync`.
 
+| Variable | Used by |
+|---|---|
+| `CILIUM_K8S_SERVICE_HOST` | Cilium (Kubernetes API endpoint) |
+| `DOMAIN` | ArgoCD, Cilium resources, Graylog, Headlamp, Grafana, Longhorn (ingress hostnames) |
+| `LETSENCRYPT_EMAIL` | cert-manager (ACME account) |
+| `CLOUDFLARE_API_TOKEN` | cert-manager (DNS01 solver), External DNS |
+| `TAILSCALE_CLIENT_ID` | Tailscale Operator |
+| `TAILSCALE_CLIENT_SECRET` | Tailscale Operator |
+
 ### Individual components
 
 Install or update a single release:
@@ -72,23 +83,34 @@ helmfile sync -f helm/helmfile.yaml -l name=kube-prometheus-stack
 
 ```
 helm/
-  helmfile.yaml              # Main Helmfile orchestrating all releases
-  <component>/               # Per-component values files
-    values.yaml              # Static values
-    values.yaml.gotmpl       # Templated values (env var substitution via requiredEnv)
+  helmfile.yaml                                 # Root helmfile — includes the four phase files below
+  01-helmfile.cni_crds_storage.yaml.gotmpl      # CRDs, CNI, storage, metrics, and ingress
+  02-helmfile.dns_cert_security.yaml.gotmpl     # DNS, certificates, and secrets
+  03-helmfile.monitoring.yaml.gotmpl            # Prometheus stack, Grafana dashboards, Headlamp
+  04-helmfile.system_operations.yaml.gotmpl     # Cluster ops, databases, GitOps, logging, VPN
+  <component>/
+    values.yaml                                 # Static values
+    values.yaml.gotmpl                          # Templated values (env var substitution)
+    src/                                        # Supporting files (e.g. Grafana dashboard JSON)
+
 manifests/
-  gateway-api-network-policy-demo/  # HTTPRoute + CiliumNetworkPolicy example
-  postgres-operator/                # CloudNativePG examples (cluster, backup, monitoring)
-  tailscale-operator/               # Tailscale API server proxy configuration
-install.sh                   # One-command installer with env validation
+  gateway-api-network-policy-demo/              # HTTPRoute + CiliumNetworkPolicy example
+  postgres-operator/                            # CloudNativePG cluster, backup, monitoring examples
+  tailscale-operator/                           # Tailscale API server proxy configuration
+
+install.sh                                      # One-command installer with env validation
 ```
 
 ## Release Dependencies
 
 Helmfile manages ordering via `needs`. Key dependency chains:
 
-- **Gateway API CRDs** are installed first via a presync hook -- Cilium and cert-manager both depend on it
-- **kube-prometheus-stack** is deployed early -- Metrics Server, Sealed Secrets, CNPG, and HAProxy depend on it for ServiceMonitor CRDs
-- **cert-manager** deploys cluster issuers as a separate release after the controller is ready
+- **Gateway API CRDs** are installed first via a presync hook — Cilium depends on them
+- **Prometheus Operator CRDs** are installed as a standalone release — provides ServiceMonitor/PodMonitor CRDs that Cilium and other components depend on
 - **Cilium** provisions Gateway, LoadBalancerIPPool, and L2 announcement resources via a dedicated `cilium-resources` release after the CNI is ready
+- **cert-manager** deploys cluster issuers as a separate release after the controller is ready
+- **External DNS** secrets are deployed before the External DNS release
 - **CNPG** deploys the operator first, then the Barman backup plugin
+- **MongoDB Operator** installs CRDs via a presync hook before deploying the operator
+- **Headlamp** RBAC is deployed as a separate release after Headlamp
+- **HAProxy** configuration is deployed as a separate release after the ingress controller

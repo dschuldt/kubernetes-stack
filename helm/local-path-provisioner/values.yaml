@@ -5,7 +5,7 @@ image:
 
 storageClass:
   create: true
-  defaultClass: true
+  defaultClass: false
   defaultVolumeType: local
   name: local-path
   reclaimPolicy: Delete

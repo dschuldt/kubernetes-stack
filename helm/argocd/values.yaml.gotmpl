@@ -5,7 +5,17 @@ configs:
   params:
     server.insecure: true
 
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
 server:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
   ingress:
     enabled: true
     ingressClassName: haproxy
@@ -15,13 +25,19 @@ server:
       - hosts:
           - argocd.{{ requiredEnv "DOMAIN" }}
         secretName: argocd-tls
-
   ingressGrpc:
     enabled: true
     ingressClassName: haproxy
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-production
+      haproxy.org/server-proto: "h2"
     extraTls:
       - hosts:
           - grpc.argocd.{{ requiredEnv "DOMAIN" }}
         secretName: argocd-grpc-tls
+
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true

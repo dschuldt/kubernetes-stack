@@ -1,0 +1,93 @@
+{{- $bedag_raw_chart_version := "2.0.2" -}}
+
+repositories:
+  - name: bedag
+    url: https://bedag.github.io/helm-charts/
+  - name: rancher-charts
+    url: https://charts.rancher.io/
+  - name: tailscale
+    url: https://pkgs.tailscale.com/helmcharts
+  - name: mongodb
+    url: https://mongodb.github.io/helm-charts
+  - name: graylog
+    url: https://graylog2.github.io/graylog-helm
+
+releases:
+  - name: kured
+    namespace: kured
+    chart: oci://ghcr.io/kubereboot/charts/kured
+    version: 5.11.0
+    createNamespace: true
+    values:
+      - kured/values.yaml
+
+  - name: system-upgrade-controller
+    namespace: cattle-system
+    chart: rancher-charts/system-upgrade-controller
+    version: 108.0.0
+    createNamespace: true
+
+  - name: system-upgrade-controller-plan
+    namespace: cattle-system
+    chart: bedag/raw
+    version: {{ $bedag_raw_chart_version }}
+    values:
+      - system-upgrade-controller/values.yaml
+    needs:
+      - cattle-system/system-upgrade-controller
+
+  - name: tailscale-operator
+    namespace: tailscale
+    chart: tailscale/tailscale-operator
+    version: 1.94.2
+    createNamespace: true
+    values:
+      - tailscale-operator/values.yaml.gotmpl
+
+  - name: argocd
+    namespace: argocd
+    chart: oci://ghcr.io/argoproj/argo-helm/argo-cd
+    version: 9.4.7
+    createNamespace: true
+    values:
+      - argocd/values.yaml.gotmpl
+
+  - name: cnpg
+    namespace: cnpg-system
+    chart: oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
+    version: 0.27.1
+    createNamespace: true
+    values:
+      - cnpg/values.yaml
+
+  - name: cnpg-barman-plugin
+    namespace: cnpg-system
+    chart: oci://ghcr.io/cloudnative-pg/charts/plugin-barman-cloud
+    version: 0.5.0
+    needs:
+      - cnpg-system/cnpg
+
+  - name: mongodb-kubernetes-operator
+    namespace: mongodb
+    chart: mongodb/mongodb-kubernetes
+    version: 1.7.0
+    createNamespace: true
+    values:
+      - mongodb-operator/values.yaml
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: "kubectl"
+        args:
+          - "apply"
+          - "--server-side"
+          - "-f"
+          - "https://raw.githubusercontent.com/mongodb/mongodb-kubernetes/1.7.0/public/crds.yaml"
+
+  - name: graylog
+    namespace: graylog
+    chart: graylog/graylog
+    version: 1.0.0
+    createNamespace: true
+    values:
+      - graylog/values.yaml.gotmpl

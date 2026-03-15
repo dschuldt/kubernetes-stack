@@ -22,9 +22,9 @@ Manifests for a CloudNativePG cluster with MinIO-backed WAL archiving and schedu
 
 | Placeholder | Description |
 |---|---|
-| `S3_ACCESS_KEY_ID_B64` | Base64-encoded MinIO access key ID |
-| `S3_ACCESS_SECRET_KEY_B64` | Base64-encoded MinIO secret access key |
-| `S3_REGION_B64` | Base64-encoded S3 region name |
+| `ACCESS_KEY_ID_B64` | Base64-encoded MinIO access key ID |
+| `ACCESS_SECRET_KEY_B64` | Base64-encoded MinIO secret access key |
+| `REGION_B64` | Base64-encoded S3 region name |
 
 Generate base64 values with:
 

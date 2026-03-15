@@ -1,0 +1,36 @@
+graylog:
+  enterprise: false
+  replicas: 1
+  inputs:
+    - name: input-gelf
+      port: 12201
+      targetPort: 12201
+      protocol: TCP
+    - name: input-forwarder
+      port: 13301
+      targetPort: 13301
+      protocol: TCP
+
+datanode:
+  replicas: 1
+
+ingress:
+  enabled: true
+  config:
+    defaultBackend:
+      enabled: false
+    tls:
+      clusterIssuer:
+        existingName: letsencrypt-production
+  web:
+    enabled: true
+    className: "haproxy"
+    hosts:
+      - host: graylog.{{ requiredEnv "DOMAIN" }}
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls:
+      - secretName: graylog-tls
+        hosts:
+          - graylog.{{ requiredEnv "DOMAIN" }}

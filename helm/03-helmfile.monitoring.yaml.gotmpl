@@ -1,0 +1,42 @@
+{{- $bedag_raw_chart_version := "2.0.2" -}}
+
+repositories:
+  - name: bedag
+    url: https://bedag.github.io/helm-charts/
+  - name: headlamp
+    url: https://kubernetes-sigs.github.io/headlamp/
+
+releases:
+  - name: kube-prometheus-stack
+    namespace: kube-prometheus-stack
+    chart: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
+    version: 82.10.1
+    createNamespace: true
+    values:
+      - kube-prometheus-stack/kube-prometheus-stack.values.yaml.gotmpl
+
+  - name: kube-prometheus-stack-grafana-dashboards
+    namespace: kube-prometheus-stack
+    chart: bedag/raw
+    version: {{ $bedag_raw_chart_version }}
+    values:
+      - kube-prometheus-stack/kube-prometheus-stack-grafana-dashboards.values.yaml.gotmpl
+    needs:
+      - kube-prometheus-stack/kube-prometheus-stack
+
+  - name: headlamp
+    namespace: headlamp
+    chart: headlamp/headlamp
+    version: 0.40.0
+    createNamespace: true
+    values:
+      - headlamp/values.yaml.gotmpl
+
+  - name: headlamp-rbac
+    namespace: headlamp
+    chart: bedag/raw
+    version: {{ $bedag_raw_chart_version }}
+    values:
+      - headlamp/headlamp-rbac.values.yaml.gotmpl
+    needs:
+      - headlamp/headlamp

@@ -2,12 +2,12 @@ ingress:
   enabled: true
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
-  ingressClassName: haproxy
+  ingressClassName: cilium
   hosts:
     - host: headlamp.{{ requiredEnv "DOMAIN" }}
       paths:
         - path: /
-          type: ImplementationSpecific
+          type: Prefix
   tls:
     - secretName: headlamp-tls
       hosts:

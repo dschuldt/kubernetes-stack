@@ -1,6 +1,10 @@
+crds:
+  enabled: false
+
 alertmanager:
   ingress:
     enabled: true
+    ingressClassName: haproxy
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-production
     hosts:
@@ -17,6 +21,7 @@ grafana:
     enabled: false
   ingress:
     enabled: true
+    ingressClassName: haproxy
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-production
     hosts:
@@ -56,6 +61,7 @@ prometheus:
               storage: 50Gi
   ingress:
     enabled: true
+    ingressClassName: haproxy
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-production
     hosts:

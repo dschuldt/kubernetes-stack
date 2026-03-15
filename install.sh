@@ -32,4 +32,5 @@ if [[ ! -n "${TAILSCALE_CLIENT_SECRET:-}" ]]; then
     exit 1
 fi
 
+helmfile cache cleanup
 helmfile sync -f helm/helmfile.yaml

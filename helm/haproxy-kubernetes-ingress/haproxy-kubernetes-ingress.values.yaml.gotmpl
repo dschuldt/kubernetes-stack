@@ -23,7 +23,7 @@ controller:
   service:
     enabled: true
     type: LoadBalancer
-    externalTrafficPolicy: "Local"
+    externalTrafficPolicy: Cluster
   serviceMonitor:
     enabled: true
     endpoints:

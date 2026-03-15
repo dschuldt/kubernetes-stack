@@ -38,3 +38,13 @@ resources:
     data:
       envoy.json: |
         {{- readFile "src/envoy.json" | nindent 8 }}
+
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: argocd-dashboard
+      labels:
+        grafana_dashboard: "1"
+    data:
+      envoy.json: |
+        {{- readFile "src/argocd.json" | nindent 8 }}
